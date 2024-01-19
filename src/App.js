@@ -1,25 +1,70 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import Login from "./components/pages/login";
+import Dashboard from "./components/pages/dashboard";
+import { UserAuthContextProvider, useUserAuth } from "./userAuthContext";
+import "./App.css";
 
-function App() {
+import { users } from "./constants";
+
+const ProtectedRoute = ({ children }) => {
+  const { user } = useUserAuth();
+
+  if (!user) {
+    return <Navigate to="/" />;
+  }
+  return children;
+};
+
+const App = () => {
+  const [userLocation, setUserLocation] = useState("en");
+
+  const handleColorChange = (location) => {
+    setUserLocation(location);
+  };
+
+  const getLocationTheme = () => {
+    const locationConfig =
+      users?.locations?.find((loc) => loc?.name === userLocation) ||
+      users?.locations[0];
+    return createTheme(locationConfig.theme);
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <ThemeProvider theme={getLocationTheme()}>
+        <UserAuthContextProvider>
+          <Router>
+            <Routes>
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard handleColorChange={handleColorChange} />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/login"
+                exact
+                element={<Login handleColorChange={handleColorChange} />}
+              />
+              <Route
+                path="/"
+                element={<Login handleColorChange={handleColorChange} />}
+              />
+            </Routes>
+          </Router>
+        </UserAuthContextProvider>
+      </ThemeProvider>
     </div>
   );
-}
+};
 
 export default App;
